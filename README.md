@@ -1,70 +1,117 @@
-# Getting Started with Create React App
+# Canvas Builder - Full-Stack Design Tool
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A professional, full-stack canvas manipulation application that allows users to create, manage, and export graphic designs. This project demonstrates advanced React patterns, backend integration, and complex UI interactions like dragging, resizing, and state synchronization.
 
-## Available Scripts
+---
 
-In the project directory, you can run:
+## 🚀 Features
 
-### `npm start`
+### **1. Component Management**
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- **Dynamic Elements**: Add and manipulate Text, Rectangles, Circles, and Images.
+- **Manipulation**: Drag to reposition, use handles to resize, and delete via keyboard or UI.
+- **Smart Resizing**: Implements proportional scaling logic to maintain aspect ratios where necessary (especially for images and circles).
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### **2. Advanced State Control**
 
-### `npm test`
+- **Undo/Redo System**: A robust history management system that tracks every change.
+- **Backend Sync**: Every action (move, resize, add, delete) is synchronized with a Node.js backend to ensure state persistence.
+- **Batch Operations**: Support for deleting multiple selected elements simultaneously.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### **3. Professional UI/UX**
 
-### `npm run build`
+- **Responsive Workspace**: The canvas automatically scales to fit different screen sizes while maintaining the internal coordinate system.
+- **Mobile Optimized**: Custom touch-friendly handles and a tabbed control panel for mobile devices.
+- **Visual Feedback**: Hover effects, selection outlines, and a dynamic zoom indicator.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### **4. Export Capabilities**
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+- **PDF Generation**: A dedicated backend service using `PDFKit` to convert the browser-based canvas into a high-quality, downloadable PDF.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+---
 
-### `npm run eject`
+## 🛠️ Technical Architecture
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### **Frontend (React)**
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+- **Canvas Rendering**: Uses the HTML5 Canvas API for high-performance rendering of elements.
+- **Interaction Logic**: Custom hooks and event listeners handle complex mouse/touch interactions (drag-and-drop, marquee selection).
+- **Coordinate Mapping**: Implements a scaling factor logic to ensure that mouse coordinates correctly map to the canvas elements regardless of the browser's zoom or window size.
+- **Focus Management**: Sophisticated focus handling to ensure keyboard shortcuts (like `Delete`) work seamlessly when interacting with the canvas.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### **Backend (Node.js & Express)**
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+- **RESTful API**: Clean endpoints for managing canvas state (`/api/canvas`, `/api/canvas/:id/elements`).
+- **In-Memory Store**: Fast state management (can be easily swapped for a database like MongoDB).
+- **PDF Engine**: Server-side rendering of canvas elements into PDF vectors.
 
-## Learn More
+### **Monorepo Strategy**
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+- **Unified Deployment**: A root-level configuration allows the entire project (Frontend + Backend) to be deployed as a single unit on Vercel.
+- **Shared Scripts**: Root `package.json` contains helper scripts to install dependencies and run both servers simultaneously.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+---
 
-### Code Splitting
+## 📦 Project Structure
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+```text
+Rocketium/
+├── frontend/                # React UI
+│   ├── src/components/      # CanvasPreview, ControlPanel, etc.
+│   ├── src/services/        # API communication logic
+│   └── App.css              # Responsive styling & Animations
+├── backend/                 # Node.js API
+│   ├── index.js             # Express server & PDF logic
+│   └── package.json         # Backend dependencies (PDFKit, etc.)
+├── vercel.json              # Monorepo deployment config
+└── package.json             # Root scripts & Workspaces
+```
 
-### Analyzing the Bundle Size
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## ⚙️ Detailed Setup
 
-### Making a Progressive Web App
+### **Installation**
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+The project uses a custom installer to handle the nested dependencies:
 
-### Advanced Configuration
+```bash
+npm run install:all
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+### **Development Workflow**
 
-### Deployment
+1. **Start Backend**: `npm run start:backend` (Runs on `http://localhost:5000`)
+2. **Start Frontend**: `cd frontend && npm start` (Runs on `http://localhost:3000`)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+The frontend is configured to proxy API requests to the backend automatically.
 
-### `npm run build` fails to minify
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## 🌍 Deployment on Vercel
+
+The project is pre-configured for **Vercel Serverless Functions**:
+
+1. The `backend/index.js` is exported as a module.
+2. `vercel.json` routes all `/api/*` traffic to the backend.
+3. The frontend is built and served as static content.
+
+---
+
+## ⌨️ Keyboard Shortcuts & Interactions
+
+| Shortcut   | Action                         |
+| :--------- | :----------------------------- |
+| `Delete`   | Remove selected elements       |
+| `Ctrl + Z` | Undo last action               |
+| `Ctrl + Y` | Redo action                    |
+| `Drag`     | Move selected element          |
+| `Handles`  | Resize element (Corners/Edges) |
+
+---
+
+## 📝 Technical Challenges Solved
+
+- **The "containerRef" Issue**: Resolved complex React Ref dependencies between the workspace and the preview components.
+- **Responsive Zoom**: Implemented a dynamic scaling system that keeps the canvas centered and interactive across all device orientations.
+- **Serverless Backend**: Adapted a standard Express server to work within Vercel's 10-second execution limit and serverless architecture.
