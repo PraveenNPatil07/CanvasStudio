@@ -1,4 +1,4 @@
-# Canvas Builder - Full-Stack Design Tool
+# CanvasStudio - Full-Stack Design Tool
 
 A professional, full-stack canvas manipulation application that allows users to create, manage, and export graphic designs. This project demonstrates advanced React patterns, backend integration, and complex UI interactions like dragging, resizing, and state synchronization.
 
