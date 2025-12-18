@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Settings, Square, Type, Image as ImageIcon } from "lucide-react";
+import { Settings, Square, Type } from "lucide-react";
 import CanvasSetup from "./CanvasSetup";
 import ShapeControls from "./ShapeControls";
 import TextControls from "./TextControls";
@@ -37,24 +37,24 @@ function ControlPanel({
   return (
     <div className="control-panel-content">
       <h2>Controls</h2>
-      
+
       {canvasId && (
         <div className="mobile-tabs">
-          <button 
+          <button
             className={`tab-btn ${activeTab === "setup" ? "active" : ""}`}
             onClick={() => setActiveTab("setup")}
           >
             <Settings size={18} />
             Setup
           </button>
-          <button 
+          <button
             className={`tab-btn ${activeTab === "shapes" ? "active" : ""}`}
             onClick={() => setActiveTab("shapes")}
           >
             <Square size={18} />
             Shapes
           </button>
-          <button 
+          <button
             className={`tab-btn ${activeTab === "content" ? "active" : ""}`}
             onClick={() => setActiveTab("content")}
           >
@@ -64,7 +64,9 @@ function ControlPanel({
         </div>
       )}
 
-      <div className={`control-section ${activeTab === "setup" ? "active" : ""}`}>
+      <div
+        className={`control-section ${activeTab === "setup" ? "active" : ""}`}
+      >
         <CanvasSetup
           width={canvasDimensions.width}
           height={canvasDimensions.height}
@@ -76,7 +78,11 @@ function ControlPanel({
 
       {canvasId && (
         <>
-          <div className={`control-section ${activeTab === "shapes" ? "active" : ""}`}>
+          <div
+            className={`control-section ${
+              activeTab === "shapes" ? "active" : ""
+            }`}
+          >
             <ShapeControls
               canvasService={canvasService}
               canvasId={canvasId}
@@ -84,7 +90,11 @@ function ControlPanel({
               onError={onError}
             />
           </div>
-          <div className={`control-section ${activeTab === "content" ? "active" : ""}`}>
+          <div
+            className={`control-section ${
+              activeTab === "content" ? "active" : ""
+            }`}
+          >
             <TextControls
               canvasService={canvasService}
               canvasId={canvasId}
