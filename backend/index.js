@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { v4: uuidv4 } = require("uuid");
+const crypto = require("crypto");
 const PDFDocument = require("pdfkit");
 const axios = require("axios");
 const { createCanvas, loadImage } = require("canvas");
@@ -37,7 +37,7 @@ const canvases = new Map();
 // Initialize Canvas
 app.post("/api/canvas", (req, res) => {
   const { width, height } = req.body;
-  const id = uuidv4();
+  const id = crypto.randomUUID();
 
   const canvasData = {
     id,
@@ -63,7 +63,7 @@ app.post("/api/canvas/:id/elements", (req, res) => {
   // Add unique ID to element
   const newElement = {
     ...element,
-    id: uuidv4(),
+    id: crypto.randomUUID(),
   };
 
   canvasData.elements.push(newElement);
