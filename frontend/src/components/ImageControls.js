@@ -43,7 +43,7 @@ function ImageControls({
   };
 
   return (
-    <div className="control-section fade-in">
+    <div className="control-group fade-in">
       <h3>
         <ImageIcon size={16} />
         Add Image

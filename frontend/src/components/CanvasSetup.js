@@ -54,7 +54,7 @@ function CanvasSetup({
   };
 
   return (
-    <div className="control-section fade-in">
+    <div className="control-group fade-in">
       <h3>
         <Maximize2 size={16} />
         Canvas Dimensions

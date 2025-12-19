@@ -29,6 +29,7 @@ function MainLayout({
           onCanvasUpdated={onCanvasUpdated}
           onElementsUpdated={onElementsUpdated}
           onError={onError}
+          closeSidebar={closeSidebar}
         />
       </div>
       <CanvasWorkspace

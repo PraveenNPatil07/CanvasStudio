@@ -19,6 +19,17 @@ function CanvasWorkspace({
       const padding = window.innerWidth < 768 ? 20 : 40;
       const containerWidth = containerRef.current.clientWidth - padding;
       const containerHeight = containerRef.current.clientHeight - padding;
+
+      if (
+        !canvasDimensions.width ||
+        !canvasDimensions.height ||
+        containerWidth <= 0 ||
+        containerHeight <= 0
+      ) {
+        setScale(1);
+        return;
+      }
+
       setScale(
         Math.min(
           containerWidth / canvasDimensions.width,

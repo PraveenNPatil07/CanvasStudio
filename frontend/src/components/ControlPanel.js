@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Settings, Square, Type } from "lucide-react";
+import { Settings, Square, Type, X } from "lucide-react";
 import CanvasSetup from "./CanvasSetup";
 import ShapeControls from "./ShapeControls";
 import TextControls from "./TextControls";
@@ -13,6 +13,7 @@ function ControlPanel({
   onCanvasUpdated,
   onElementsUpdated,
   onError,
+  closeSidebar,
 }) {
   const [activeTab, setActiveTab] = useState("setup");
 
@@ -36,7 +37,16 @@ function ControlPanel({
 
   return (
     <div className="control-panel-content">
-      <h2>Controls</h2>
+      <div className="control-panel-header">
+        <h2>Controls</h2>
+        <button
+          className="close-sidebar hidden-desktop"
+          onClick={closeSidebar}
+          aria-label="Close Sidebar"
+        >
+          <X size={20} />
+        </button>
+      </div>
 
       {canvasId && (
         <div className="mobile-tabs">

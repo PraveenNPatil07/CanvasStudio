@@ -38,7 +38,7 @@ function TextControls({ canvasService, canvasId, onElementsUpdated, onError }) {
   };
 
   return (
-    <div className="control-section fade-in">
+    <div className="control-group fade-in">
       <h3>
         <Type size={16} />
         Add Text

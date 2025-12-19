@@ -55,7 +55,7 @@ function ShapeControls({
   };
 
   return (
-    <div className="control-section fade-in">
+    <div className="control-group fade-in">
       <h3>
         <Square size={16} />
         Add Shape
