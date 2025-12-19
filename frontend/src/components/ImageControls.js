@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Image as ImageIcon, Plus, Move, Maximize } from "lucide-react";
+import { Plus } from "lucide-react";
 
 function ImageControls({
   canvasService,
@@ -7,30 +7,25 @@ function ImageControls({
   onElementsUpdated,
   onError,
 }) {
-  const [formData, setFormData] = useState({
-    url: "",
-    x: 150,
-    y: 150,
-    width: 200,
-    height: 200,
-  });
+  const [url, setUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleAddImage = async (e) => {
     e.preventDefault();
+    if (!url) return;
     setIsLoading(true);
 
     try {
       const response = await canvasService.addImage(
         canvasId,
-        formData.url,
-        formData.x,
-        formData.y,
-        formData.width,
-        formData.height
+        url,
+        150,
+        150,
+        200,
+        200
       );
       onElementsUpdated(response.elements);
-      setFormData((prev) => ({ ...prev, url: "" }));
+      setUrl("");
     } catch (error) {
       onError(error.message);
     } finally {
@@ -38,99 +33,26 @@ function ImageControls({
     }
   };
 
-  const handleInputChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
   return (
-    <div className="control-group fade-in">
-      <h3>
-        <ImageIcon size={16} />
-        Add Image
-      </h3>
-
-      <form onSubmit={handleSubmit} className="form-section">
-        <div className="form-group">
-          <label>
-            <ImageIcon size={14} />
-            Image URL
-          </label>
+    <div className="creation-group">
+      <form onSubmit={handleAddImage} className="image-add-form">
+        <div className="input-with-button">
           <input
             type="url"
-            placeholder="https://example.com/image.jpg"
-            value={formData.url}
-            onChange={(e) => handleInputChange("url", e.target.value)}
+            placeholder="Paste image URL..."
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
             required
           />
+          <button
+            type="submit"
+            className="btn-primary btn-icon-sm"
+            disabled={isLoading || !url}
+            title="Add Image"
+          >
+            {isLoading ? <span className="spinner-sm" /> : <Plus size={18} />}
+          </button>
         </div>
-
-        <div className="form-row">
-          <div className="form-group">
-            <label>
-              <Move size={14} />X Position
-            </label>
-            <input
-              type="number"
-              min="0"
-              value={formData.x}
-              onChange={(e) => handleInputChange("x", parseInt(e.target.value))}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>
-              <Move size={14} />Y Position
-            </label>
-            <input
-              type="number"
-              min="0"
-              value={formData.y}
-              onChange={(e) => handleInputChange("y", parseInt(e.target.value))}
-              required
-            />
-          </div>
-        </div>
-
-        <div className="form-row">
-          <div className="form-group">
-            <label>
-              <Maximize size={14} />
-              Width
-            </label>
-            <input
-              type="number"
-              min="10"
-              value={formData.width}
-              onChange={(e) =>
-                handleInputChange("width", parseInt(e.target.value))
-              }
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>
-              <Maximize size={14} />
-              Height
-            </label>
-            <input
-              type="number"
-              min="10"
-              value={formData.height}
-              onChange={(e) =>
-                handleInputChange("height", parseInt(e.target.value))
-              }
-              required
-            />
-          </div>
-        </div>
-
-        <button
-          type="submit"
-          disabled={isLoading || !formData.url.trim() || !canvasId}
-        >
-          <Plus size={16} />
-          {isLoading ? "Adding..." : "Add Image"}
-        </button>
       </form>
     </div>
   );

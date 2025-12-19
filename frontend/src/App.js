@@ -12,7 +12,9 @@ function App() {
     height: 600,
   });
   const [elements, setElements] = useState([]);
-  const [error, setError] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [canvasTitle, setCanvasTitle] = useState("Untitled Design");
+  const [errorMessage, setErrorMessage] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
@@ -21,7 +23,7 @@ function App() {
   const handleCanvasInitialized = (id, dimensions) => {
     setCanvasId(id);
     setCanvasDimensions(dimensions);
-    setError(null);
+    setErrorMessage("");
     closeSidebar();
   };
 
@@ -33,10 +35,6 @@ function App() {
     setElements(updatedElements);
   };
 
-  const handleError = (error) => {
-    setError(error);
-  };
-
   return (
     <div className="app">
       <Header
@@ -44,23 +42,28 @@ function App() {
         elementCount={elements.length}
         hasCanvas={!!canvasId}
         toggleSidebar={toggleSidebar}
+        canvasTitle={canvasTitle}
+        onTitleChange={setCanvasTitle}
       />
       <MainLayout
         canvasService={canvasService}
         canvasId={canvasId}
         canvasDimensions={canvasDimensions}
+        canvasTitle={canvasTitle}
         elements={elements}
+        selectedIds={selectedIds}
         onCanvasInitialized={handleCanvasInitialized}
         onCanvasUpdated={handleCanvasUpdated}
         onElementsUpdated={handleElementsUpdated}
-        onError={handleError}
+        setSelectedIds={setSelectedIds}
+        onError={setErrorMessage}
         isSidebarOpen={isSidebarOpen}
-        closeSidebar={closeSidebar}
+        closeSidebar={() => setIsSidebarOpen(false)}
       />
-      {error && (
+      {errorMessage && (
         <div className="error-toast">
-          <span>{error}</span>
-          <button onClick={() => setError(null)}>×</button>
+          <span>{errorMessage}</span>
+          <button onClick={() => setErrorMessage("")}>×</button>
         </div>
       )}
     </div>

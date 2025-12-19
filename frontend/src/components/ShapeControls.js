@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Square, Circle, Plus, Palette, Move, Maximize } from "lucide-react";
+import React from "react";
+import { Square, Circle } from "lucide-react";
 
 function ShapeControls({
   canvasService,
@@ -7,186 +7,69 @@ function ShapeControls({
   onElementsUpdated,
   onError,
 }) {
-  const [shapeType, setShapeType] = useState("rectangle");
-  const [formData, setFormData] = useState({
-    x: 50,
-    y: 50,
-    width: 100,
-    height: 100,
-    radius: 50,
-    color: "#6366f1",
-  });
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-
+  const addShape = async (type) => {
     try {
       let response;
-      if (shapeType === "rectangle") {
+      const defaultColor = "#8b3dff"; // Matches --primary
+
+      if (type === "rectangle") {
         response = await canvasService.addRectangle(
           canvasId,
-          formData.x,
-          formData.y,
-          formData.width,
-          formData.height,
-          formData.color
+          100,
+          100,
+          100,
+          100,
+          defaultColor
         );
-      } else {
+      } else if (type === "circle") {
         response = await canvasService.addCircle(
           canvasId,
-          formData.x,
-          formData.y,
-          formData.radius,
-          formData.color
+          200,
+          200,
+          50,
+          defaultColor
+        );
+      } else if (type === "triangle") {
+        // Assuming triangle is a type of rectangle or separate method
+        // If no triangle method, we'll use a placeholder or rectangle for now
+        response = await canvasService.addRectangle(
+          canvasId,
+          150,
+          150,
+          100,
+          100,
+          defaultColor
         );
       }
-      onElementsUpdated(response.elements);
+
+      if (response) {
+        onElementsUpdated(response.elements);
+      }
     } catch (error) {
       onError(error.message);
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  const handleInputChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
   return (
-    <div className="control-group fade-in">
-      <h3>
-        <Square size={16} />
-        Add Shape
-      </h3>
-
-      <form onSubmit={handleSubmit} className="form-section">
-        <div className="form-group">
-          <label>Shape Type</label>
-          <div className="radio-group">
-            <label className={shapeType === "rectangle" ? "active" : ""}>
-              <input
-                type="radio"
-                value="rectangle"
-                checked={shapeType === "rectangle"}
-                onChange={(e) => setShapeType(e.target.value)}
-              />
-              <Square size={14} />
-              Rectangle
-            </label>
-            <label className={shapeType === "circle" ? "active" : ""}>
-              <input
-                type="radio"
-                value="circle"
-                checked={shapeType === "circle"}
-                onChange={(e) => setShapeType(e.target.value)}
-              />
-              <Circle size={14} />
-              Circle
-            </label>
-          </div>
-        </div>
-
-        <div className="form-row">
-          <div className="form-group">
-            <label>
-              <Move size={14} />X Position
-            </label>
-            <input
-              type="number"
-              min="0"
-              value={formData.x}
-              onChange={(e) => handleInputChange("x", parseInt(e.target.value))}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>
-              <Move size={14} />Y Position
-            </label>
-            <input
-              type="number"
-              min="0"
-              value={formData.y}
-              onChange={(e) => handleInputChange("y", parseInt(e.target.value))}
-              required
-            />
-          </div>
-        </div>
-
-        {shapeType === "rectangle" ? (
-          <div className="form-row">
-            <div className="form-group">
-              <label>
-                <Maximize size={14} />
-                Width
-              </label>
-              <input
-                type="number"
-                min="1"
-                value={formData.width}
-                onChange={(e) =>
-                  handleInputChange("width", parseInt(e.target.value))
-                }
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>
-                <Maximize size={14} />
-                Height
-              </label>
-              <input
-                type="number"
-                min="1"
-                value={formData.height}
-                onChange={(e) =>
-                  handleInputChange("height", parseInt(e.target.value))
-                }
-                required
-              />
-            </div>
-          </div>
-        ) : (
-          <div className="form-group">
-            <label>
-              <Maximize size={14} />
-              Radius
-            </label>
-            <input
-              type="number"
-              min="1"
-              value={formData.radius}
-              onChange={(e) =>
-                handleInputChange("radius", parseInt(e.target.value))
-              }
-              required
-            />
-          </div>
-        )}
-
-        <div className="form-group">
-          <label>
-            <Palette size={14} />
-            Fill Color
-          </label>
-          <input
-            type="color"
-            value={formData.color}
-            onChange={(e) => handleInputChange("color", e.target.value)}
-          />
-        </div>
-
+    <div className="creation-group">
+      <div className="creation-grid">
         <button
-          type="submit"
-          className="btn-block"
-          disabled={isLoading || !canvasId}
+          className="btn-tertiary creation-btn"
+          onClick={() => addShape("rectangle")}
+          title="Add Rectangle"
         >
-          <Plus size={16} />
-          {isLoading ? "Adding..." : "Add Shape"}
+          <Square size={20} />
+          <span>Square</span>
         </button>
-      </form>
+        <button
+          className="btn-tertiary creation-btn"
+          onClick={() => addShape("circle")}
+          title="Add Circle"
+        >
+          <Circle size={20} />
+          <span>Circle</span>
+        </button>
+      </div>
     </div>
   );
 }

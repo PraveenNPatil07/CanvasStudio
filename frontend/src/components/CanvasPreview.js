@@ -11,13 +11,15 @@ function CanvasPreview({
   elements,
   onElementsUpdated,
   scale,
+  selectedIds,
+  setSelectedIds,
+  onError,
 }) {
   const canvasRef = useRef(null);
   const imagesRef = useRef({});
 
   // Interaction State
   const [localElements, setLocalElements] = useState(elements);
-  const [selectedIds, setSelectedIds] = useState([]);
   const [interaction, setInteraction] = useState({
     type: "none", // 'none', 'moving', 'resizing', 'selecting'
     handle: null, // for resizing
@@ -38,6 +40,45 @@ function CanvasPreview({
     }
   }, [elements, interaction.type]);
 
+  const [hoveredId, setHoveredId] = useState(null);
+  const [guides, setGuides] = useState([]);
+  const [clipboard, setClipboard] = useState(null);
+
+  // Theme Colors
+  const themeRef = useRef({
+    primary: "#8b3dff",
+    primaryAlpha: (opacity) => `rgba(139, 61, 255, ${opacity})`,
+    danger: "#ff4d4f",
+    bgMain: "#f0f2f5",
+  });
+
+  useEffect(() => {
+    const style = getComputedStyle(document.documentElement);
+    const primary = style.getPropertyValue("--primary").trim() || "#8b3dff";
+    const danger = style.getPropertyValue("--danger").trim() || "#ff4d4f";
+    const bgMain = style.getPropertyValue("--bg-main").trim() || "#f0f2f5";
+
+    // Extract RGB for alpha colors
+    const hexToRgb = (hex) => {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result
+        ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(
+            result[3],
+            16
+          )}`
+        : "139, 61, 255";
+    };
+
+    const primaryRgb = hexToRgb(primary);
+
+    themeRef.current = {
+      primary,
+      primaryAlpha: (opacity) => `rgba(${primaryRgb}, ${opacity})`,
+      danger,
+      bgMain,
+    };
+  }, []);
+
   // Drawing Logic using requestAnimationFrame
   const getHandles = useCallback(
     (x, y, w, h) => ({
@@ -55,7 +96,7 @@ function CanvasPreview({
 
   const drawSelection = useCallback(
     (ctx, el) => {
-      ctx.strokeStyle = "#6366f1";
+      ctx.strokeStyle = themeRef.current.primary;
       ctx.lineWidth = 2;
       ctx.setLineDash([5, 5]);
 
@@ -83,7 +124,7 @@ function CanvasPreview({
       if (selectedIds.length === 1) {
         ctx.setLineDash([]);
         ctx.fillStyle = "#ffffff";
-        ctx.strokeStyle = "#6366f1";
+        ctx.strokeStyle = themeRef.current.primary;
         ctx.lineWidth = 2;
 
         const handles = getHandles(x, y, w, h);
@@ -112,8 +153,8 @@ function CanvasPreview({
     const ctx = canvas.getContext("2d");
 
     ctx.clearRect(0, 0, width, height);
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, width, height);
+    // Remove explicit fillRect for white background to keep canvas transparent
+    // The background is already handled by CSS in .canvas-container-wrapper
 
     // Draw Elements
     localElements.forEach((el) => {
@@ -147,7 +188,7 @@ function CanvasPreview({
               el.height
             );
           } else {
-            ctx.fillStyle = "#f1f5f9";
+            ctx.fillStyle = themeRef.current.bgMain;
             ctx.fillRect(el.x, el.y, el.width, el.height);
             const img = new Image();
             img.crossOrigin = "anonymous";
@@ -164,25 +205,78 @@ function CanvasPreview({
       if (isSelected) {
         ctx.save();
         ctx.shadowBlur = 10;
-        ctx.shadowColor = "rgba(99, 102, 241, 0.4)";
+        ctx.shadowColor = themeRef.current.primaryAlpha(0.4);
         drawSelection(ctx, el);
         ctx.restore();
       }
       ctx.restore();
     });
 
+    // Draw Hover Indicator
+    if (hoveredId && !selectedIds.includes(hoveredId)) {
+      const el = localElements.find((e) => e.id === hoveredId);
+      if (el) {
+        ctx.save();
+        ctx.strokeStyle = themeRef.current.primaryAlpha(0.4);
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 5]);
+        if (el.type === "circle") {
+          ctx.beginPath();
+          ctx.arc(el.x, el.y, el.radius + 2, 0, Math.PI * 2);
+          ctx.stroke();
+        } else if (el.type === "text") {
+          ctx.font = `${el.fontSize}px Inter, -apple-system, sans-serif`;
+          const m = ctx.measureText(el.content);
+          ctx.strokeRect(el.x - 2, el.y - 2, m.width + 4, el.fontSize + 4);
+        } else {
+          ctx.strokeRect(el.x - 2, el.y - 2, el.width + 4, el.height + 4);
+        }
+        ctx.setLineDash([]);
+        ctx.restore();
+      }
+    }
+
+    // Draw Alignment Guides
+    if (guides.length > 0) {
+      ctx.save();
+      ctx.strokeStyle = themeRef.current.danger;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([2, 2]);
+      guides.forEach((guide) => {
+        ctx.beginPath();
+        if (guide.type === "h") {
+          ctx.moveTo(0, guide.y);
+          ctx.lineTo(width, guide.y);
+        } else {
+          ctx.moveTo(guide.x, 0);
+          ctx.lineTo(guide.x, height);
+        }
+        ctx.stroke();
+      });
+      ctx.restore();
+    }
+
     // Draw Marquee
     if (interaction.type === "selecting" && interaction.marquee) {
       ctx.save();
-      ctx.strokeStyle = "rgba(99, 102, 241, 0.5)";
-      ctx.fillStyle = "rgba(99, 102, 241, 0.1)";
+      ctx.strokeStyle = themeRef.current.primaryAlpha(0.5);
+      ctx.fillStyle = themeRef.current.primaryAlpha(0.1);
       ctx.lineWidth = 1;
       const { x, y, width: w, height: h } = interaction.marquee;
       ctx.fillRect(x, y, w, h);
       ctx.strokeRect(x, y, w, h);
       ctx.restore();
     }
-  }, [width, height, localElements, selectedIds, interaction, drawSelection]);
+  }, [
+    width,
+    height,
+    localElements,
+    selectedIds,
+    interaction,
+    drawSelection,
+    hoveredId,
+    guides,
+  ]);
 
   // Animation Loop
   useEffect(() => {
@@ -241,6 +335,32 @@ function CanvasPreview({
       );
     }
     return false;
+  };
+
+  const isElementInRect = (el, rect) => {
+    let elBounds;
+    if (el.type === "circle") {
+      elBounds = {
+        x: el.x - el.radius,
+        y: el.y - el.radius,
+        w: el.radius * 2,
+        h: el.radius * 2,
+      };
+    } else if (el.type === "text") {
+      const ctx = canvasRef.current.getContext("2d");
+      ctx.font = `${el.fontSize}px Inter, -apple-system, sans-serif`;
+      const m = ctx.measureText(el.content);
+      elBounds = { x: el.x, y: el.y, w: m.width, h: el.fontSize };
+    } else {
+      elBounds = { x: el.x, y: el.y, w: el.width, h: el.height };
+    }
+
+    return (
+      elBounds.x < rect.x + rect.width &&
+      elBounds.x + elBounds.w > rect.x &&
+      elBounds.y < rect.y + rect.height &&
+      elBounds.y + elBounds.h > rect.y
+    );
   };
 
   const handleMouseDown = (e) => {
@@ -329,6 +449,20 @@ function CanvasPreview({
   const handleMouseMove = (e) => {
     const { x, y } = getMousePos(e);
 
+    // Update Hover State
+    if (interaction.type === "none") {
+      let foundId = null;
+      for (let i = localElements.length - 1; i >= 0; i--) {
+        if (isPointInElement(x, y, localElements[i])) {
+          foundId = localElements[i].id;
+          break;
+        }
+      }
+      setHoveredId(foundId);
+    } else {
+      setHoveredId(null);
+    }
+
     // Update Hover State for handles
     if (interaction.type === "none" && selectedIds.length === 1) {
       const el = localElements.find((el) => el.id === selectedIds[0]);
@@ -371,13 +505,41 @@ function CanvasPreview({
       const dx = x - interaction.startPos.x;
       const dy = y - interaction.startPos.y;
 
+      let newGuides = [];
+      const SNAP_THRESHOLD = 5;
+
       const newElements = localElements.map((el) => {
         if (selectedIds.includes(el.id)) {
           const initialEl = interaction.initialElements.find(
             (ie) => ie.id === el.id
           );
-          let newX = Math.round((initialEl.x + dx) / GRID_SIZE) * GRID_SIZE;
-          let newY = Math.round((initialEl.y + dy) / GRID_SIZE) * GRID_SIZE;
+          let newX = initialEl.x + dx;
+          let newY = initialEl.y + dy;
+
+          // Alignment Guides & Snapping (only for single element for simplicity)
+          if (selectedIds.length === 1) {
+            const centerX = width / 2;
+            const centerY = height / 2;
+
+            // Snap to Canvas Center X
+            if (
+              Math.abs(newX + (el.width || 0) / 2 - centerX) < SNAP_THRESHOLD
+            ) {
+              newX = centerX - (el.width || 0) / 2;
+              newGuides.push({ type: "v", x: centerX });
+            }
+            // Snap to Canvas Center Y
+            if (
+              Math.abs(newY + (el.height || 0) / 2 - centerY) < SNAP_THRESHOLD
+            ) {
+              newY = centerY - (el.height || 0) / 2;
+              newGuides.push({ type: "h", y: centerY });
+            }
+          }
+
+          // Apply Grid
+          newX = Math.round(newX / GRID_SIZE) * GRID_SIZE;
+          newY = Math.round(newY / GRID_SIZE) * GRID_SIZE;
 
           // Basic boundary check
           newX = Math.max(-50, Math.min(newX, width));
@@ -387,6 +549,8 @@ function CanvasPreview({
         }
         return el;
       });
+
+      setGuides(newGuides);
       setLocalElements(newElements);
     } else if (interaction.type === "resizing") {
       const el = localElements.find((e) => e.id === selectedIds[0]);
@@ -513,7 +677,16 @@ function CanvasPreview({
   };
 
   const handleMouseUp = async () => {
-    if (interaction.type !== "none") {
+    setGuides([]);
+
+    if (interaction.type === "selecting" && interaction.marquee) {
+      const selected = localElements
+        .filter((el) => isElementInRect(el, interaction.marquee))
+        .map((el) => el.id);
+      setSelectedIds(selected);
+    }
+
+    if (interaction.type !== "none" && interaction.type !== "selecting") {
       const updates = localElements
         .filter(
           (el, i) =>
@@ -625,11 +798,171 @@ function CanvasPreview({
     onElementsUpdated,
     history,
     historyIndex,
+    setSelectedIds,
   ]);
+
+  const handleCopy = useCallback(() => {
+    if (selectedIds.length === 0) return;
+    const toCopy = localElements
+      .filter((el) => selectedIds.includes(el.id))
+      .map((el) => {
+        const { id, ...rest } = el;
+        return rest;
+      });
+    setClipboard(toCopy);
+  }, [selectedIds, localElements]);
+
+  const handlePaste = useCallback(async () => {
+    if (!clipboard) return;
+    try {
+      // Offset pasted elements slightly
+      const offset = 20;
+      const toPaste = clipboard.map((el) => ({
+        ...el,
+        x: (el.x || 0) + offset,
+        y: (el.y || 0) + offset,
+      }));
+
+      const res = await canvasService.addElements(canvasId, toPaste);
+      onElementsUpdated(res.elements);
+      setSelectedIds(res.newElements.map((el) => el.id));
+
+      // History
+      const newHistory = history.slice(0, historyIndex + 1);
+      newHistory.push(res.elements);
+      setHistory(newHistory);
+      setHistoryIndex(newHistory.length - 1);
+    } catch (err) {
+      console.error("Paste failed", err);
+    }
+  }, [
+    clipboard,
+    canvasId,
+    canvasService,
+    onElementsUpdated,
+    history,
+    historyIndex,
+    setSelectedIds,
+  ]);
+
+  const handleReorder = useCallback(
+    async (direction) => {
+      if (selectedIds.length === 0) return;
+
+      let newElements = [...localElements];
+      const selectedIndices = selectedIds
+        .map((id) => newElements.findIndex((el) => el.id === id))
+        .sort((a, b) => a - b);
+
+      if (direction === "front") {
+        const selected = selectedIndices.map((i) => newElements[i]);
+        const remaining = newElements.filter(
+          (_, i) => !selectedIndices.includes(i)
+        );
+        newElements = [...remaining, ...selected];
+      } else if (direction === "back") {
+        const selected = selectedIndices.map((i) => newElements[i]);
+        const remaining = newElements.filter(
+          (_, i) => !selectedIndices.includes(i)
+        );
+        newElements = [...selected, ...remaining];
+      } else if (direction === "forward") {
+        for (let i = selectedIndices.length - 1; i >= 0; i--) {
+          const idx = selectedIndices[i];
+          if (
+            idx < newElements.length - 1 &&
+            !selectedIndices.includes(idx + 1)
+          ) {
+            [newElements[idx], newElements[idx + 1]] = [
+              newElements[idx + 1],
+              newElements[idx],
+            ];
+          }
+        }
+      } else if (direction === "backward") {
+        for (let i = 0; i < selectedIndices.length; i++) {
+          const idx = selectedIndices[i];
+          if (idx > 0 && !selectedIndices.includes(idx - 1)) {
+            [newElements[idx], newElements[idx - 1]] = [
+              newElements[idx - 1],
+              newElements[idx],
+            ];
+          }
+        }
+      }
+
+      setLocalElements(newElements);
+      try {
+        const res = await canvasService.syncElements(canvasId, newElements);
+        onElementsUpdated(res.elements);
+        // History
+        const newHistory = history.slice(0, historyIndex + 1);
+        newHistory.push(res.elements);
+        setHistory(newHistory);
+        setHistoryIndex(newHistory.length - 1);
+      } catch (err) {
+        console.error("Reorder failed", err);
+      }
+    },
+    [
+      selectedIds,
+      localElements,
+      canvasId,
+      canvasService,
+      onElementsUpdated,
+      history,
+      historyIndex,
+    ]
+  );
+
+  const handleNudge = useCallback(
+    async (key, shiftKey) => {
+      if (selectedIds.length === 0) return;
+
+      const moveStep = shiftKey ? GRID_SIZE : 1;
+      const updates = localElements
+        .filter((el) => selectedIds.includes(el.id))
+        .map((el) => {
+          let newX = el.x;
+          let newY = el.y;
+          if (key === "ArrowLeft") newX -= moveStep;
+          if (key === "ArrowRight") newX += moveStep;
+          if (key === "ArrowUp") newY -= moveStep;
+          if (key === "ArrowDown") newY += moveStep;
+          return { id: el.id, x: newX, y: newY };
+        });
+
+      setLocalElements(
+        localElements.map((el) => {
+          const up = updates.find((u) => u.id === el.id);
+          return up ? { ...el, x: up.x, y: up.y } : el;
+        })
+      );
+
+      // Sync with backend after a short delay or on key up
+      try {
+        const res = await canvasService.updateElements(canvasId, updates);
+        onElementsUpdated(res.elements);
+      } catch (err) {
+        console.error("Nudge sync failed", err);
+      }
+    },
+    [selectedIds, localElements, canvasId, canvasService, onElementsUpdated]
+  );
 
   useEffect(() => {
     const handleKeyDown = async (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "z") {
+      if ((e.ctrlKey || e.metaKey) && e.key === "c") {
+        handleCopy();
+      } else if ((e.ctrlKey || e.metaKey) && e.key === "v") {
+        handlePaste();
+      } else if (e.key === "[") {
+        e.preventDefault();
+        handleReorder(e.ctrlKey || e.metaKey ? "backward" : "back");
+      } else if (e.key === "]") {
+        e.preventDefault();
+        handleReorder(e.ctrlKey || e.metaKey ? "forward" : "front");
+      } else if ((e.ctrlKey || e.metaKey) && e.key === "z") {
         e.preventDefault();
         if (e.shiftKey) redo();
         else undo();
@@ -645,26 +978,10 @@ function CanvasPreview({
           handleDelete();
         }
       } else if (
-        ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key) &&
-        selectedIds.length > 0
+        ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)
       ) {
         e.preventDefault();
-        const step = e.shiftKey ? 10 : 1;
-        const dx =
-          e.key === "ArrowLeft" ? -step : e.key === "ArrowRight" ? step : 0;
-        const dy =
-          e.key === "ArrowUp" ? -step : e.key === "ArrowDown" ? step : 0;
-
-        const updates = localElements
-          .filter((el) => selectedIds.includes(el.id))
-          .map((el) => ({ id: el.id, x: el.x + dx, y: el.y + dy }));
-
-        try {
-          const res = await canvasService.updateElements(canvasId, updates);
-          onElementsUpdated(res.elements);
-        } catch (err) {
-          console.error("Keyboard move failed", err);
-        }
+        handleNudge(e.key, e.shiftKey);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -673,65 +990,11 @@ function CanvasPreview({
     undo,
     redo,
     handleDelete,
-    selectedIds,
-    localElements,
-    canvasId,
-    canvasService,
-    onElementsUpdated,
+    handleCopy,
+    handlePaste,
+    handleReorder,
+    handleNudge,
   ]);
-
-  const [selectionBounds, setSelectionBounds] = useState(null);
-
-  useEffect(() => {
-    if (selectedIds.length === 0) {
-      setSelectionBounds(null);
-      return;
-    }
-    const selected = localElements.filter((el) => selectedIds.includes(el.id));
-    let minX = Infinity,
-      minY = Infinity,
-      maxX = -Infinity,
-      maxY = -Infinity;
-    selected.forEach((el) => {
-      let x, y, w, h;
-      if (el.type === "circle") {
-        x = el.x - el.radius;
-        y = el.y - el.radius;
-        w = h = el.radius * 2;
-      } else if (el.type === "text") {
-        const canvas = canvasRef.current;
-        if (canvas) {
-          const ctx = canvas.getContext("2d");
-          ctx.font = `${el.fontSize}px Inter, -apple-system, sans-serif`;
-          const metrics = ctx.measureText(el.content);
-          x = el.x;
-          y = el.y;
-          w = metrics.width;
-          h = el.fontSize;
-        } else {
-          x = el.x;
-          y = el.y;
-          w = 0;
-          h = 0;
-        }
-      } else {
-        x = el.x;
-        y = el.y;
-        w = el.width;
-        h = el.height;
-      }
-      minX = Math.min(minX, x);
-      minY = Math.min(minY, y);
-      maxX = Math.max(maxX, x + w);
-      maxY = Math.max(maxY, y + h);
-    });
-    setSelectionBounds({
-      x: minX,
-      y: minY,
-      width: maxX - minX,
-      height: maxY - minY,
-    });
-  }, [selectedIds, localElements]);
 
   return (
     <div
@@ -766,21 +1029,7 @@ function CanvasPreview({
         aria-hidden="true" // Drawing is decorative for screen readers; selection-overlay handles interactive parts
       />
 
-      {selectionBounds && interaction.type === "none" && (
-        <div
-          className="selection-overlay"
-          role="region"
-          aria-label={`${selectedIds.length} component${
-            selectedIds.length > 1 ? "s" : ""
-          } selected. Press Delete to remove.`}
-          style={{
-            left: selectionBounds.x,
-            top: selectionBounds.y,
-            width: selectionBounds.width,
-            height: selectionBounds.height,
-          }}
-        />
-      )}
+      {/* Selection drawn on canvas, removing DOM overlay to prevent misalignment */}
     </div>
   );
 }

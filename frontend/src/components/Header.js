@@ -1,39 +1,56 @@
 import React from "react";
-import { Layout, Maximize, Layers, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 
-function Header({ canvasDimensions, elementCount, hasCanvas, toggleSidebar }) {
+function Header({
+  canvasDimensions,
+  elementCount,
+  hasCanvas,
+  toggleSidebar,
+  canvasTitle,
+  onTitleChange,
+}) {
+  const handleTitleChange = (e) => {
+    const value = e.target.value;
+    // Basic sanitization for the input itself (removing obvious problematic chars)
+    const sanitized = value.replace(/[<>:"/\\|?*]/g, "");
+    onTitleChange(sanitized);
+  };
+
   return (
-    <header className="header">
-      <div className="header-content">
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <button
-            className="mobile-nav-toggle"
-            onClick={toggleSidebar}
-            aria-label="Toggle Sidebar"
-          >
-            <Menu size={24} />
-          </button>
-          <h1>
-            <Layout className="text-primary" size={24} />
-            <span>Canvas Builder</span>
-          </h1>
+    <header className="app-header">
+      <div className="header-left">
+        <button
+          className="mobile-nav-toggle btn-icon-sm"
+          onClick={toggleSidebar}
+        >
+          <Menu size={20} />
+        </button>
+        <div className="app-logo">
+          <div className="logo-icon">R</div>
+          <span className="logo-text">Rocketium</span>
         </div>
-        {hasCanvas && (
-          <div className="canvas-info fade-in">
-            <span className="hidden-mobile">
-              <Maximize size={14} />
-              {canvasDimensions.width} × {canvasDimensions.height}px
+        <div className="header-divider" />
+        <div className="doc-info">
+          <input
+            type="text"
+            className="doc-name-input"
+            value={canvasTitle}
+            onChange={handleTitleChange}
+            placeholder="Untitled Design"
+            maxLength={50}
+            title="Rename design"
+          />
+          {hasCanvas && (
+            <span className="doc-meta">
+              {canvasDimensions.width} × {canvasDimensions.height} px •{" "}
+              {elementCount} elements
             </span>
-            <span className="visible-mobile">
-              <Maximize size={14} />
-              {canvasDimensions.width}×{canvasDimensions.height}
-            </span>
-            <span>
-              <Layers size={14} />
-              {elementCount} Elements
-            </span>
-          </div>
-        )}
+          )}
+        </div>
+      </div>
+
+      <div className="header-right">
+        <div className="header-actions">{/* Header actions can go here */}</div>
       </div>
     </header>
   );

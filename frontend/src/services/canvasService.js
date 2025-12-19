@@ -93,6 +93,10 @@ class CanvasService {
     });
   }
 
+  async addElements(canvasId, elements) {
+    return this.request(`/canvas/${canvasId}/elements`, "POST", elements);
+  }
+
   async updateElement(canvasId, elementId, updates) {
     return this.request(
       `/canvas/${canvasId}/elements/${elementId}`,

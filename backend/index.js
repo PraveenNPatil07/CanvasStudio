@@ -50,24 +50,27 @@ app.post("/api/canvas", (req, res) => {
   res.status(201).json(canvasData);
 });
 
-// Add Element to Canvas
+// Add Element(s) to Canvas
 app.post("/api/canvas/:id/elements", (req, res) => {
   const { id } = req.params;
-  const element = req.body;
+  const data = req.body;
 
   const canvasData = canvases.get(id);
   if (!canvasData) {
     return res.status(404).json({ error: "Canvas not found" });
   }
 
-  // Add unique ID to element
-  const newElement = {
-    ...element,
+  const elementsToAdd = Array.isArray(data) ? data : [data];
+  const newElements = elementsToAdd.map((el) => ({
+    ...el,
     id: crypto.randomUUID(),
-  };
+  }));
 
-  canvasData.elements.push(newElement);
-  res.json(canvasData);
+  canvasData.elements.push(...newElements);
+  res.json({
+    ...canvasData,
+    newElements, // Return only the newly added elements for selection
+  });
 });
 
 // Update Element in Canvas

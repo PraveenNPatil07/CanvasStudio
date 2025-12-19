@@ -1,13 +1,15 @@
 import React, { useState, useRef, useEffect } from "react";
+import { Plus, Minus } from "lucide-react";
 import CanvasPreview from "./CanvasPreview";
-import ExportControls from "./ExportControls";
 
 function CanvasWorkspace({
   canvasService,
   canvasId,
   canvasDimensions,
   elements,
+  selectedIds,
   onElementsUpdated,
+  setSelectedIds,
   onError,
 }) {
   const [scale, setScale] = useState(1);
@@ -16,7 +18,7 @@ function CanvasWorkspace({
   useEffect(() => {
     const updateScale = () => {
       if (!containerRef.current) return;
-      const padding = window.innerWidth < 768 ? 20 : 40;
+      const padding = 80; // More padding for Canva feel
       const containerWidth = containerRef.current.clientWidth - padding;
       const containerHeight = containerRef.current.clientHeight - padding;
 
@@ -26,7 +28,7 @@ function CanvasWorkspace({
         containerWidth <= 0 ||
         containerHeight <= 0
       ) {
-        setScale(1);
+        setScale(0.8);
         return;
       }
 
@@ -49,28 +51,42 @@ function CanvasWorkspace({
     };
   }, [canvasDimensions.width, canvasDimensions.height]);
 
+  const handleZoom = (delta) => {
+    setScale((prev) => Math.min(Math.max(prev + delta, 0.1), 5));
+  };
+
   return (
-    <div className="canvas-workspace">
-      <div style={{ position: "relative", width: "100%" }}>
-        <div className="canvas-preview-container" ref={containerRef}>
-          <div className="canvas-preview-wrapper">
-            <CanvasPreview
-              canvasService={canvasService}
-              canvasId={canvasId}
-              width={canvasDimensions.width}
-              height={canvasDimensions.height}
-              elements={elements}
-              onElementsUpdated={onElementsUpdated}
-              scale={scale}
-            />
-          </div>
-        </div>
+    <div className="canvas-workspace" ref={containerRef}>
+      <div
+        className="canvas-container-wrapper"
+        style={{
+          width: canvasDimensions.width * scale,
+          height: canvasDimensions.height * scale,
+        }}
+      >
+        <CanvasPreview
+          canvasService={canvasService}
+          canvasId={canvasId}
+          width={canvasDimensions.width}
+          height={canvasDimensions.height}
+          elements={elements}
+          selectedIds={selectedIds}
+          onElementsUpdated={onElementsUpdated}
+          setSelectedIds={setSelectedIds}
+          scale={scale}
+        />
       </div>
-      <ExportControls
-        canvasService={canvasService}
-        canvasId={canvasId}
-        onError={onError}
-      />
+
+      {/* Floating Zoom Controls */}
+      <div className="zoom-controls">
+        <button onClick={() => handleZoom(-0.1)} title="Zoom Out">
+          <Minus size={18} strokeWidth={2.5} color="currentColor" />
+        </button>
+        <span className="zoom-level">{Math.round(scale * 100)}%</span>
+        <button onClick={() => handleZoom(0.1)} title="Zoom In">
+          <Plus size={18} strokeWidth={2.5} color="currentColor" />
+        </button>
+      </div>
     </div>
   );
 }
