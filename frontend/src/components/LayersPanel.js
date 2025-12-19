@@ -2,6 +2,8 @@ import React from "react";
 import {
   Maximize2,
   Minimize2,
+  ChevronUp,
+  ChevronDown,
   Trash2,
   Square,
   Circle,
@@ -37,6 +39,22 @@ function LayersPanel({ elements, selectedIds, onSelect, onReorder, onDelete }) {
           title="Bring to Front"
         >
           <Maximize2 size={14} />
+        </button>
+        <button
+          className="btn-tertiary btn-icon-sm"
+          onClick={() => onReorder("forward")}
+          disabled={selectedIds.length === 0}
+          title="Move Forward"
+        >
+          <ChevronUp size={14} />
+        </button>
+        <button
+          className="btn-tertiary btn-icon-sm"
+          onClick={() => onReorder("backward")}
+          disabled={selectedIds.length === 0}
+          title="Move Backward"
+        >
+          <ChevronDown size={14} />
         </button>
         <button
           className="btn-tertiary btn-icon-sm"
