@@ -129,8 +129,9 @@ function CanvasSetup({
       <form onSubmit={handleSubmit} className="form-section">
         <div className="form-row">
           <div className="form-group">
-            <label>Width</label>
+            <label htmlFor="canvas-width">Width</label>
             <input
+              id="canvas-width"
               type="number"
               value={w}
               onChange={(e) => handleWidthChange(e.target.value)}
@@ -140,8 +141,9 @@ function CanvasSetup({
             />
           </div>
           <div className="form-group">
-            <label>Height</label>
+            <label htmlFor="canvas-height">Height</label>
             <input
+              id="canvas-height"
               type="number"
               value={h}
               onChange={(e) => handleHeightChange(e.target.value)}

@@ -6,27 +6,31 @@ A professional, full-stack canvas manipulation application that allows users to 
 
 ## 🚀 Features
 
-### **1. Component Management**
+### **1. Advanced Design Canvas**
 
-- **Dynamic Elements**: Add and manipulate Text, Rectangles, Circles, and Images.
-- **Manipulation**: Drag to reposition, use handles to resize, and delete via keyboard or UI.
-- **Smart Resizing**: Implements proportional scaling logic to maintain aspect ratios where necessary (especially for images and circles).
+- **Infinite Possibilities**: Add and manipulate Text, Rectangles, Circles, and high-resolution Images.
+- **Precision Control**: Drag, resize, and rotate elements with pixel-perfect accuracy.
+- **Smart Alignment**: Integrated guides and proportional scaling to keep your designs professional.
+- **Layer Management**: New **Layers Panel** for complex designs, allowing you to lock, hide, or reorder elements with ease.
 
-### **2. Advanced State Control**
+### **2. Seamless User Experience**
 
-- **Undo/Redo System**: A robust history management system that tracks every change.
-- **Backend Sync**: Every action (move, resize, add, delete) is synchronized with a Node.js backend to ensure state persistence.
-- **Batch Operations**: Support for deleting multiple selected elements simultaneously.
+- **Distraction-Free Workspace**: A clean, modern UI inspired by top-tier design tools like Canva.
+- **Instant Feedback**: Hover states, selection overlays, and smooth animations.
+- **Undo/Redo History**: Never lose a change with our robust design history system.
+- **Keyboard Power-User**: Support for shortcuts like `Delete`, `Ctrl+C/V`, `Ctrl+Z/Y`, and arrow key nudging.
 
-### **3. Professional UI/UX**
+### **3. Professional Workflows**
 
-- **Responsive Workspace**: The canvas automatically scales to fit different screen sizes while maintaining the internal coordinate system.
-- **Mobile Optimized**: Custom touch-friendly handles and a tabbed control panel for mobile devices.
-- **Visual Feedback**: Hover effects, selection outlines, and a dynamic zoom indicator.
+- **Real-time Persistence**: Design state is synchronized with the backend instantly.
+- **Adaptive Canvas**: Workspace scales beautifully from mobile to ultra-wide monitors.
+- **Floating Controls**: Modern zoom controls and property panels that stay out of your way until needed.
 
 ### **4. Export Capabilities**
 
-- **PDF Generation**: A dedicated backend service using `PDFKit` to convert the browser-based canvas into a high-quality, downloadable PDF.
+- **High-Quality PNG**: Client-side canvas serialization to PNG format for instant downloads.
+- **Professional PDF**: A dedicated backend service using `PDFKit` to convert the browser-based canvas into a high-quality, print-ready PDF.
+- **Cross-Origin Support**: Robust image handling using CORS-aware loading for reliable exports even with external assets.
 
 ---
 
@@ -34,16 +38,20 @@ A professional, full-stack canvas manipulation application that allows users to 
 
 ### **Frontend (React)**
 
-- **Canvas Rendering**: Uses the HTML5 Canvas API for high-performance rendering of elements.
-- **Interaction Logic**: Custom hooks and event listeners handle complex mouse/touch interactions (drag-and-drop, marquee selection).
-- **Coordinate Mapping**: Implements a scaling factor logic to ensure that mouse coordinates correctly map to the canvas elements regardless of the browser's zoom or window size.
-- **Focus Management**: Sophisticated focus handling to ensure keyboard shortcuts (like `Delete`) work seamlessly when interacting with the canvas.
+- **Canvas Engine**: Custom-built rendering engine using HTML5 Canvas API with a 60FPS `requestAnimationFrame` loop.
+- **State Management**: Optimized local state with `useCallback` and `useMemo` to minimize re-renders in complex designs.
+- **Layering System**: Full support for element Z-indexing (bring to front, send to back).
+- **Interactive Controls**:
+  - Floating zoom controls with scale-aware rendering.
+  - Keyboard shortcuts for productivity (Delete, Undo/Redo, Arrow nudging).
+  - Responsive design that maintains aspect ratio and coordinate precision.
+- **Asset Loading**: Asynchronous image pre-loading with caching to prevent flicker during canvas redraws.
 
 ### **Backend (Node.js & Express)**
 
-- **RESTful API**: Clean endpoints for managing canvas state (`/api/canvas`, `/api/canvas/:id/elements`).
-- **In-Memory Store**: Fast state management (can be easily swapped for a database like MongoDB).
-- **PDF Engine**: Server-side rendering of canvas elements into PDF vectors.
+- **Persistence Layer**: Lightweight, in-memory storage for rapid state synchronization.
+- **PDF Generation**: Vector-based PDF creation ensuring zero quality loss.
+- **CORS Configuration**: Securely configured for cross-origin resource sharing between frontend and backend.
 
 ### **Monorepo Strategy**
 

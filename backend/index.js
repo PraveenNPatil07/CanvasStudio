@@ -50,26 +50,38 @@ app.post("/api/canvas", (req, res) => {
   res.status(201).json(canvasData);
 });
 
+// Helper to get or create canvas (for stateless environments like Vercel)
+const getOrCreateCanvas = (id) => {
+  let canvasData = canvases.get(id);
+  if (!canvasData) {
+    canvasData = {
+      id,
+      width: 800,
+      height: 600,
+      elements: [],
+    };
+    canvases.set(id, canvasData);
+  }
+  return canvasData;
+};
+
 // Add Element(s) to Canvas
 app.post("/api/canvas/:id/elements", (req, res) => {
   const { id } = req.params;
   const data = req.body;
 
-  const canvasData = canvases.get(id);
-  if (!canvasData) {
-    return res.status(404).json({ error: "Canvas not found" });
-  }
+  const canvasData = getOrCreateCanvas(id);
 
   const elementsToAdd = Array.isArray(data) ? data : [data];
   const newElements = elementsToAdd.map((el) => ({
     ...el,
-    id: crypto.randomUUID(),
+    id: el.id || crypto.randomUUID(),
   }));
 
   canvasData.elements.push(...newElements);
   res.json({
     ...canvasData,
-    newElements, // Return only the newly added elements for selection
+    newElements,
   });
 });
 
@@ -78,16 +90,17 @@ app.put("/api/canvas/:id/elements/:elementId", (req, res) => {
   const { id, elementId } = req.params;
   const updatedElement = req.body;
 
-  const canvasData = canvases.get(id);
-  if (!canvasData) {
-    return res.status(404).json({ error: "Canvas not found" });
-  }
+  const canvasData = getOrCreateCanvas(id);
 
   const elementIndex = canvasData.elements.findIndex(
     (el) => el.id === elementId
   );
+
   if (elementIndex === -1) {
-    return res.status(404).json({ error: "Element not found" });
+    // If element doesn't exist, add it
+    const newElement = { ...updatedElement, id: elementId };
+    canvasData.elements.push(newElement);
+    return res.json(canvasData);
   }
 
   canvasData.elements[elementIndex] = {
@@ -101,24 +114,26 @@ app.put("/api/canvas/:id/elements/:elementId", (req, res) => {
 // Batch Update Elements in Canvas
 app.put("/api/canvas/:id/elements", (req, res) => {
   const { id } = req.params;
-  const { updates } = req.body; // Array of { id, ...updates }
+  const { updates } = req.body;
 
-  const canvasData = canvases.get(id);
-  if (!canvasData) {
-    return res.status(404).json({ error: "Canvas not found" });
+  const canvasData = getOrCreateCanvas(id);
+
+  if (Array.isArray(updates)) {
+    updates.forEach((update) => {
+      const elementIndex = canvasData.elements.findIndex(
+        (el) => el.id === update.id
+      );
+      if (elementIndex !== -1) {
+        canvasData.elements[elementIndex] = {
+          ...canvasData.elements[elementIndex],
+          ...update,
+        };
+      } else {
+        // If element doesn't exist, add it
+        canvasData.elements.push(update);
+      }
+    });
   }
-
-  updates.forEach((update) => {
-    const elementIndex = canvasData.elements.findIndex(
-      (el) => el.id === update.id
-    );
-    if (elementIndex !== -1) {
-      canvasData.elements[elementIndex] = {
-        ...canvasData.elements[elementIndex],
-        ...update,
-      };
-    }
-  });
 
   res.json(canvasData);
 });
@@ -127,8 +142,7 @@ app.put("/api/canvas/:id/elements", (req, res) => {
 app.post("/api/canvas/:id/elements/sync", (req, res) => {
   const { id } = req.params;
   const { elements } = req.body;
-  const canvasData = canvases.get(id);
-  if (!canvasData) return res.status(404).json({ error: "Canvas not found" });
+  const canvasData = getOrCreateCanvas(id);
 
   canvasData.elements = elements;
   res.json(canvasData);
@@ -153,16 +167,14 @@ app.put("/api/canvas/:id", (req, res) => {
 // Delete Element from Canvas
 app.delete("/api/canvas/:id/elements/:elementId", (req, res) => {
   const { id, elementId } = req.params;
-  const canvasData = canvases.get(id);
-  if (!canvasData) return res.status(404).json({ error: "Canvas not found" });
+  const canvasData = getOrCreateCanvas(id);
 
   const elementIndex = canvasData.elements.findIndex(
     (el) => el.id === elementId
   );
-  if (elementIndex === -1)
-    return res.status(404).json({ error: "Element not found" });
-
-  canvasData.elements.splice(elementIndex, 1);
+  if (elementIndex !== -1) {
+    canvasData.elements.splice(elementIndex, 1);
+  }
   res.json(canvasData);
 });
 
@@ -170,23 +182,20 @@ app.delete("/api/canvas/:id/elements/:elementId", (req, res) => {
 app.delete("/api/canvas/:id/elements", (req, res) => {
   const { id } = req.params;
   const { ids } = req.body; // Array of element IDs to delete
-  const canvasData = canvases.get(id);
-  if (!canvasData) return res.status(404).json({ error: "Canvas not found" });
+  const canvasData = getOrCreateCanvas(id);
 
-  canvasData.elements = canvasData.elements.filter(
-    (el) => !ids.includes(el.id)
-  );
+  if (Array.isArray(ids)) {
+    canvasData.elements = canvasData.elements.filter(
+      (el) => !ids.includes(el.id)
+    );
+  }
   res.json(canvasData);
 });
 
 // Export as PDF
 app.get("/api/canvas/:id/export", async (req, res) => {
   const { id } = req.params;
-  const canvasData = canvases.get(id);
-
-  if (!canvasData) {
-    return res.status(404).json({ error: "Canvas not found" });
-  }
+  const canvasData = getOrCreateCanvas(id);
 
   const doc = new PDFDocument({
     size: [canvasData.width, canvasData.height],
