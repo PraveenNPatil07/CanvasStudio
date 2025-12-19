@@ -631,19 +631,6 @@ button.secondary:hover {
   min-height: calc(100vh - 200px);
 }
 
-@media (max-width: 768px) {
-  .canvas-zoom-indicator {
-    bottom: 1rem;
-    right: 1rem;
-    padding: 0.5rem 0.875rem;
-    font-size: 0.7rem;
-  }
-
-  .canvas-zoom-indicator span {
-    display: none;
-  }
-}
-
 /* Selection & Transformation */
 .selection-overlay {
   position: absolute;
@@ -653,27 +640,6 @@ button.secondary:hover {
   border-radius: 2px;
   z-index: 5;
   transition: all 0.15s ease;
-}
-
-.canvas-zoom-indicator {
-  position: absolute;
-  bottom: 1.5rem;
-  right: 1.5rem;
-  background: var(--bg-card);
-  padding: 0.625rem 1.25rem;
-  border-radius: 2rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2),
-    0 8px 10px -6px rgba(0, 0, 0, 0.2);
-  border: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  color: var(--text-main);
-  z-index: 50;
-  pointer-events: none;
-  backdrop-filter: blur(8px);
 }
 
 .canvas-preview {

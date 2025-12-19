@@ -54,12 +54,6 @@ function CanvasWorkspace({
             />
           </div>
         </div>
-        <div className="canvas-zoom-indicator">
-          {Math.round(scale * 100)}%
-          <span style={{ marginLeft: "1rem", opacity: 0.5 }}>
-            Ctrl+Z to undo | Shift+Drag to select multiple
-          </span>
-        </div>
       </div>
       <ExportControls
         canvasService={canvasService}
